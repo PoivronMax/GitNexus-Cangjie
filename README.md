@@ -48,9 +48,9 @@ sudo -E npm install -g "$(pwd)"
 
 ### Run from GitHub (no clone)
 
-`npx` installs the **repo root** (workspace **`gitnexus-workspace`**). The **`gitnexus-cj`** command comes from the **workspace package** [`gitnexus-cj/`](./gitnexus-cj/) — its `prepare` script runs `npm run build`, which produces `gitnexus-cj/dist/` (that folder is not committed). Do **not** use a root-level shim into `gitnexus-cj/dist/`; the workspace bin is the supported entry.
+`npx` / `npm exec` installs the **repo root** (workspace **`gitnexus-workspace`**). npm discovers the **`gitnexus-cj`** executable from the root **`package.json` → `bin`** (required by npm); that script imports the workspace package **`gitnexus-cj`** after install (`import('gitnexus-cj/dist/cli/index.js')`). The workspace’s **`prepare`** runs **`npm run build`**, which creates **`gitnexus-cj/dist/`** (not committed). A relative `../gitnexus-cj/dist/...` shim can fail in some install layouts; resolving by package name does not.
 
-**Monorepo root** (installs workspaces; `gitnexus-cj` is linked into `.bin`):
+**Monorepo root** (workspaces + root `bin`):
 
 ```bash
 npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj --help

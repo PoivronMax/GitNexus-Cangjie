@@ -1,6 +1,6 @@
 {
   "name": "gitnexus-cj",
-  "version": "1.4.7.cj-beta2",
+  "version": "1.4.7.cj-beta3",
   "description": "GitNexus for Cangjie (仓颉): graph-powered code intelligence — full CLI, MCP, and multi-language indexing (self-contained package).",
   "author": "Abhigyan Patwari",
   "license": "PolyForm-Noncommercial-1.0.0",

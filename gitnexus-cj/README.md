@@ -12,7 +12,7 @@ Works with **Cursor**, **Claude Code**, **Windsurf**, **Cline**, **OpenCode**, a
 
 In **[this GitHub repo](https://github.com/abhigyanpatwari/GitNexus)** the engine lives under **`gitnexus-cj/`**; the root `package.json` is a **workspace**, so `npm install` at the repo root installs and links this package.
 
-From GitHub without cloning, the install target is usually the **monorepo root**; npm links this package’s bin from the workspace:
+From GitHub without cloning, the install target is usually the **monorepo root**; **`npm exec` / `npx` require a `bin` on that root package**, which delegates here (see root [`bin/gitnexus-cj.mjs`](../bin/gitnexus-cj.mjs)):
 
 ```bash
 npx -y github:OWNER/REPO gitnexus-cj --help
