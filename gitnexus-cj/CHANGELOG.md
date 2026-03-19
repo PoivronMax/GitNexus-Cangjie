@@ -18,6 +18,7 @@ All notable changes to GitNexus will be documented in this file.
 - **MCP tool/resource descriptions** updated to reflect Phase 9 ACCESSES edge semantics and `declaredType` property
 
 ### Fixed
+- **lbug**: `CodeRelation` schema now allows `HAS_METHOD` / `HAS_PROPERTY` from `Enum` to members (e.g. Cangjie enum methods were parsed but edges were dropped on load)
 - **mcp**: server crashes under parallel tool calls (#326, #349)
 - **parsing**: undefined error on languages missing from call routers (#364)
 - **web**: add missing Kotlin entries to `Record<SupportedLanguages>` maps

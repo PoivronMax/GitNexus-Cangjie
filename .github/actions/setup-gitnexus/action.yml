@@ -14,15 +14,13 @@ runs:
       with:
         node-version: 20
         cache: npm
-        cache-dependency-path: gitnexus/package-lock.json
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
       run: npm ci
       shell: bash
-      working-directory: gitnexus
 
     - name: Build
       if: ${{ inputs.build == 'true' }}
-      run: npm run build
+      run: npm run build --workspace=gitnexus-cj
       shell: bash
-      working-directory: gitnexus

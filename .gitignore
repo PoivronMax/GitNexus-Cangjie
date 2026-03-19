@@ -60,13 +60,13 @@ repomix-output*
 # Design docs (local only)
 docs/plans/
 
-gitnexus/test/fixtures/mini-repo/*.md
-gitnexus/test/fixtures/mini-repo/.claude
-gitnexus/test/fixtures/mini-repo/.gitignore
+gitnexus-cj/test/fixtures/mini-repo/*.md
+gitnexus-cj/test/fixtures/mini-repo/.claude
+gitnexus-cj/test/fixtures/mini-repo/.gitignore
 
 # Ignore csharp generated obj and bin folders
-gitnexus/test/fixtures/lang-resolution/**/obj
-gitnexus/test/fixtures/lang-resolution/**/bin
+gitnexus-cj/test/fixtures/lang-resolution/**/obj
+gitnexus-cj/test/fixtures/lang-resolution/**/bin
 GitNexus.sln
 # Git worktrees
 .worktrees/

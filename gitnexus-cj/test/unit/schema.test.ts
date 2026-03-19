@@ -121,10 +121,10 @@ describe('LadybugDB Schema', () => {
     });
 
     it('has all FROM/TO pairs needed for HAS_METHOD edges', () => {
-      // HAS_METHOD sources: Class, Interface, Struct, Trait, Impl, Record
+      // HAS_METHOD sources: Class, Interface, Struct, Trait, Impl, Record, Enum (e.g. Cangjie enum methods)
       // HAS_METHOD targets: Method, Constructor (Property is now HAS_PROPERTY)
       const sources = ['Class', 'Interface'];
-      const backtickSources = ['Struct', 'Trait', 'Impl', 'Record'];
+      const backtickSources = ['Struct', 'Trait', 'Impl', 'Record', 'Enum'];
       const targets = ['Method'];
       const backtickTargets = ['Constructor'];
 

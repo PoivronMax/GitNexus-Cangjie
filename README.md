@@ -15,8 +15,7 @@ Works with **Cursor**, **Claude Code**, **Windsurf**, **Cline**, **OpenCode**, a
 
 | Path | Purpose |
 |------|---------|
-| **`gitnexus/`** | Published npm package **`gitnexus`** — CLI, MCP, indexing. **This fork** adds **Cangjie** (`.cj`) and pins **`tree-sitter` ≥ 0.25** for that grammar. |
-| **`gitnexus-cj/`** | **`gitnexus-cj`** — same CLI via `GITNEXUS_PROGRAM_NAME`; **depends on registry `gitnexus`** |
+| **`gitnexus-cj/`** | npm workspace package **`gitnexus-cj`** — full CLI, MCP, and multi-language indexing (including **Cangjie** `.cj`). Self-contained; no separate `gitnexus` dependency. See [`gitnexus-cj/README.md`](./gitnexus-cj/README.md). |
 | **`gitnexus-web/`** | Browser UI — run `npm install` / `npm run dev` **inside that folder** (not part of the root npm workspace). |
 
 ### Develop from a clone
@@ -28,7 +27,24 @@ npm install
 npx gitnexus-cj --help
 ```
 
-Root **`package.json`** uses workspace **`gitnexus-cj`** only, plus **`dependencies` / `overrides`: `gitnexus` → `file:./gitnexus`**, so the **full** `node_modules` tree for the local **`gitnexus/`** package is installed (Cangjie + native parsers). **`npx gitnexus`** / **`npx gitnexus-cj`** both resolve to that linked copy here.
+Root **`package.json`** declares an npm **workspace** for **`gitnexus-cj`** only. One install pulls the full engine (Cangjie + native parsers).
+
+To work only on the package:
+
+```bash
+cd gitnexus-cj && npm install && npm run build
+```
+(Or stay at root and use `npm run build --workspace=gitnexus-cj`.)
+
+**Global install from a clone** (needs C++20 when native `tree-sitter` builds on Node 22+):
+
+```bash
+cd gitnexus-cj
+export CXXFLAGS='-std=c++20'
+sudo -E npm install -g "$(pwd)"
+```
+
+`sudo -E` preserves `CXXFLAGS` for the compile; otherwise use `sudo env CXXFLAGS='-std=c++20' npm install -g "$(pwd)"`.
 
 ### Run from GitHub (no clone)
 
@@ -67,7 +83,7 @@ AI coding tools don't understand your codebase structure. They edit a function w
 npx gitnexus analyze
 ```
 
-> **From npm:** `gitnexus-cj` depends on **registry `gitnexus`**, so other languages stay on the **official** stack. **Cangjie** in this repo is exercised when you **`npm install` at the monorepo root** (linked `file:./gitnexus`) or install/build **`gitnexus/`** directly.
+> **From npm:** install **`gitnexus-cj`** for the full stack (all supported languages including Cangjie). This monorepo builds that package from **`gitnexus-cj/`**.
 
 That's it. This indexes the codebase, installs agent skills, registers Claude Code hooks, and creates `AGENTS.md` / `CLAUDE.md` context files — all in one command.
 
@@ -99,7 +115,7 @@ If you prefer to configure manually instead of using `gitnexus setup`:
 ### Claude Code (full support — MCP + skills + hooks)
 
 ```bash
-claude mcp add gitnexus -- npx -y gitnexus@latest mcp
+claude mcp add gitnexus -- npx gitnexus@latest mcp
 ```
 
 ### Cursor / Windsurf
@@ -204,7 +220,7 @@ GitNexus supports indexing multiple repositories. Each `gitnexus analyze` regist
 
 ## Supported Languages
 
-TypeScript, JavaScript, Python, Java, C, C++, C#, Go, Rust, PHP, Kotlin, Swift, Ruby, **Cangjie (`.cj`)** (in **`gitnexus/`** when built from this repo)
+TypeScript, JavaScript, Python, Java, C, C++, C#, Go, Rust, PHP, Kotlin, Swift, Ruby, **Cangjie (`.cj`)** (via **`gitnexus-cj`** when built from this repo)
 
 ### Language Feature Matrix
 
@@ -243,7 +259,7 @@ Installed automatically by both `gitnexus analyze` (per-repo) and `gitnexus setu
 - Node.js >= 18
 - Git repository (uses git for commit tracking)
 
-### Building `gitnexus/` from source (native `tree-sitter`)
+### Building `gitnexus-cj/` from source (native `tree-sitter`)
 
 The **`gitnexus`** package builds **`tree-sitter` 0.25** from source (no prebuilds). On **Node.js 22+**, V8 headers expect **C++20**. If `npm install` fails while compiling `tree-sitter`, run:
 
@@ -252,7 +268,9 @@ export CXXFLAGS='-std=c++20'
 npm install
 ```
 
-Or, from **`gitnexus/`**: `npm run install:with-cpp20`. **Cangjie** (`tree-sitter-cangjie`) targets ABI **language version 15**, which requires **`tree-sitter` ≥ 0.25**.
+**Global:** from **`gitnexus-cj/`**, `export CXXFLAGS='-std=c++20'` then `sudo -E npm install -g "$(pwd)"` (see [Develop from a clone](#develop-from-a-clone)).
+
+Or, from **`gitnexus-cj/`**: `npm run install:with-cpp20`. **Cangjie** (`tree-sitter-cangjie`) targets ABI **language version 15**, which requires **`tree-sitter` ≥ 0.25**.
 
 Root **`.npmrc`** sets `legacy-peer-deps=true` so grammar packages’ peer ranges on older `tree-sitter` do not block install.
 

@@ -127,6 +127,46 @@ interface ResolveCtx {
 }
 
 /**
+ * Map dotted Cangjie package paths (e.g. ohos_app_cangjie_entry.services.*) to on-disk
+ * `cangjie/...` directories. Harmony projects use a logical package root that does not
+ * appear as a path prefix; we slide window + try `cangjie/` prefix like Java suffix rules.
+ */
+function matchCangjiePackageImport(
+  rawImportPath: string,
+  index: SuffixIndex,
+  options: { isWildcard: boolean; stripTrailingSymbol: boolean },
+): ImportResult {
+  let pathBody = rawImportPath;
+  if (options.isWildcard) {
+    if (!pathBody.endsWith('.*')) return null;
+    pathBody = pathBody.slice(0, -2);
+  }
+  const pathLike = pathBody.replace(/\./g, '/');
+  const segs = pathLike.split('/').filter(Boolean);
+  if (segs.length === 0) return null;
+
+  const candidateSegLists: string[][] = [segs];
+  if (options.stripTrailingSymbol && segs.length >= 2) {
+    candidateSegLists.push(segs.slice(0, -1));
+  }
+
+  for (const s of candidateSegLists) {
+    for (let i = 0; i < s.length; i++) {
+      const tail = s.slice(i).join('/');
+      for (const prefix of ['cangjie/', '']) {
+        const dir = prefix + tail;
+        const files = index.getFilesInDir(dir, '.cj');
+        if (files.length > 0) {
+          const dirNorm = dir.replace(/\/+$/, '');
+          return { kind: 'package', files, dirSuffix: `/${dirNorm}/` };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Result of resolving an import via language-specific dispatch.
  * - 'files': resolved to one or more files → add to ImportMap
  * - 'package': resolved to a directory → add graph edges + store dirSuffix in PackageMap
@@ -246,6 +286,14 @@ function resolveLanguageImport(
     return resolved.length > 0 ? { kind: 'files', files: resolved } : null;
   }
 
+  // Cangjie: wildcard package imports (import pkg.sub.*) — must run before resolveImportPath,
+  // which intentionally drops .* paths.
+  if (language === SupportedLanguages.Cangjie && rawImportPath.endsWith('.*')) {
+    const wild = matchCangjiePackageImport(rawImportPath, index, { isWildcard: true, stripTrailingSymbol: false });
+    if (wild) return wild;
+    return null;
+  }
+
   // Standard single-file resolution
   const resolvedPath = resolveImportPath(
     filePath,
@@ -259,7 +307,16 @@ function resolveLanguageImport(
     index,
   );
 
-  return resolvedPath ? { kind: 'files', files: [resolvedPath] } : null;
+  if (resolvedPath) return { kind: 'files', files: [resolvedPath] };
+
+  // Cangjie: qualified imports where the last segment is a func/type inside a module file
+  // (e.g. ...core.storage.getAuthStorage) or package-only path (import ...storage.{a,b})
+  if (language === SupportedLanguages.Cangjie) {
+    const pkg = matchCangjiePackageImport(rawImportPath, index, { isWildcard: false, stripTrailingSymbol: true });
+    if (pkg) return pkg;
+  }
+
+  return null;
 }
 
 /**

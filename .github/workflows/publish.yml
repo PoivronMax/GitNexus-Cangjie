@@ -29,9 +29,8 @@ jobs:
           node-version: 20
           registry-url: https://registry.npmjs.org
           cache: npm
-          cache-dependency-path: gitnexus/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
-        working-directory: gitnexus
 
       - name: Verify version consistency
         shell: bash
@@ -41,25 +40,21 @@ jobs:
             echo "::error::Tag does not follow semver: v$TAG_VERSION"
             exit 1
           fi
-          PKG_VERSION=$(node -p "require('./package.json').version")
+          PKG_VERSION=$(node -p "require('./gitnexus-cj/package.json').version")
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
             echo "::error::Tag version (v$TAG_VERSION) does not match package.json version ($PKG_VERSION)"
             exit 1
           fi
           echo "Version verified: $PKG_VERSION"
-        working-directory: gitnexus
 
       - name: Build
-        run: npm run build
-        working-directory: gitnexus
+        run: npm run build --workspace=gitnexus-cj
 
       - name: Dry-run publish
-        run: npm publish --dry-run
-        working-directory: gitnexus
+        run: npm publish --dry-run --workspace=gitnexus-cj
 
       - name: Publish to npm
-        run: npm publish --provenance --access public
-        working-directory: gitnexus
+        run: npm publish --provenance --access public --workspace=gitnexus-cj
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

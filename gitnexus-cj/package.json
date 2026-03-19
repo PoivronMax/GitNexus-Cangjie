@@ -1,27 +1,10 @@
 {
   "name": "gitnexus-cj",
-  "version": "1.4.7",
-  "description": "GitNexus CLI alias for Cangjie (仓颉) workflows — same engine as gitnexus, dedicated package name for .cj projects",
+  "version": "1.4.7.cj-beta2",
+  "description": "GitNexus for Cangjie (仓颉): graph-powered code intelligence — full CLI, MCP, and multi-language indexing (self-contained package).",
+  "author": "Abhigyan Patwari",
   "license": "PolyForm-Noncommercial-1.0.0",
-  "type": "module",
-  "bin": {
-    "gitnexus-cj": "bin/gitnexus-cj.mjs"
-  },
-  "files": [
-    "bin",
-    "README.md"
-  ],
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "keywords": [
-    "gitnexus",
-    "cangjie",
-    "仓颉",
-    "cj",
-    "mcp",
-    "code-intelligence"
-  ],
+  "homepage": "https://github.com/abhigyanpatwari/GitNexus/tree/main/gitnexus-cj#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/abhigyanpatwari/GitNexus.git",
@@ -30,8 +13,94 @@
   "bugs": {
     "url": "https://github.com/abhigyanpatwari/GitNexus/issues"
   },
-  "homepage": "https://github.com/abhigyanpatwari/GitNexus/tree/main/gitnexus-cj#readme",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "code-intelligence",
+    "knowledge-graph",
+    "cursor",
+    "claude",
+    "ai-agent",
+    "gitnexus",
+    "gitnexus-cj",
+    "cangjie",
+    "仓颉",
+    "cj",
+    "static-analysis",
+    "codebase-indexing"
+  ],
+  "type": "module",
+  "bin": {
+    "gitnexus-cj": "bin/gitnexus-cj.mjs"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "hooks",
+    "scripts",
+    "skills",
+    "vendor"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/cli/index.ts",
+    "test": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "test:integration": "vitest run test/integration",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "npm run build",
+    "postinstall": "node scripts/patch-tree-sitter-swift.cjs && node scripts/patch-tree-sitter-cangjie-compat.cjs",
+    "install:with-cpp20": "bash scripts/npm-install-with-cpp20.sh",
+    "prepack": "npm run build && chmod +x dist/cli/index.js bin/gitnexus-cj.mjs"
+  },
   "dependencies": {
-    "gitnexus": "^1.4.7"
+    "@huggingface/transformers": "^3.0.0",
+    "@ladybugdb/core": "^0.15.2",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "cli-progress": "^3.12.0",
+    "commander": "^12.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "glob": "^11.0.0",
+    "graphology": "^0.25.4",
+    "graphology-indices": "^0.17.0",
+    "graphology-utils": "^2.3.0",
+    "ignore": "^7.0.5",
+    "lru-cache": "^11.0.0",
+    "mnemonist": "^0.39.0",
+    "pandemonium": "^2.4.0",
+    "tree-sitter": "0.25.0",
+    "tree-sitter-c": "^0.21.0",
+    "tree-sitter-c-sharp": "^0.21.0",
+    "tree-sitter-cangjie": "git+https://gitcode.com/Cangjie-SIG/tree-sitter-cangjie",
+    "tree-sitter-cpp": "^0.22.0",
+    "tree-sitter-go": "^0.21.0",
+    "tree-sitter-java": "^0.21.0",
+    "tree-sitter-javascript": "^0.21.0",
+    "tree-sitter-php": "^0.23.12",
+    "tree-sitter-python": "^0.21.0",
+    "tree-sitter-ruby": "^0.23.1",
+    "tree-sitter-rust": "^0.21.0",
+    "tree-sitter-typescript": "^0.21.0",
+    "uuid": "^13.0.0"
+  },
+  "optionalDependencies": {
+    "tree-sitter-kotlin": "^0.3.8",
+    "tree-sitter-swift": "^0.6.0"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.0.0",
+    "@types/uuid": "^10.0.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.5",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

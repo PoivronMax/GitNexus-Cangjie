@@ -26,7 +26,7 @@ jobs:
           --coverage.reporter=text
           --coverage.thresholdAutoUpdate=false
           --coverage.reportOnFailure=true
-        working-directory: gitnexus
+        working-directory: gitnexus-cj
 
       - name: Upload test reports
         if: always()
@@ -34,9 +34,9 @@ jobs:
         with:
           name: test-reports
           path: |
-            gitnexus/coverage/coverage-summary.json
-            gitnexus/coverage/coverage-final.json
-            gitnexus/test-results.json
+            gitnexus-cj/coverage/coverage-summary.json
+            gitnexus-cj/coverage/coverage-final.json
+            gitnexus-cj/test-results.json
           retention-days: 5
 
   cross-platform:
@@ -54,4 +54,4 @@ jobs:
         with:
           build: 'true'
       - run: npx vitest run
-        working-directory: gitnexus
+        working-directory: gitnexus-cj

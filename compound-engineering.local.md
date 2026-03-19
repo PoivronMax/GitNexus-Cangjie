@@ -7,15 +7,15 @@ voltagent_agents: [voltagent-lang:typescript-pro, voltagent-qa-sec:security-audi
 # Review Context
 
 ## Project Overview
-GitNexus is a code intelligence tool that builds a knowledge graph from source code using tree-sitter AST parsing across 12 languages and KuzuDB for graph storage. Two packages: `gitnexus/` (CLI/MCP, TypeScript) and `gitnexus-web/` (browser).
+GitNexus is a code intelligence tool that builds a knowledge graph from source code using tree-sitter AST parsing across 12 languages and KuzuDB for graph storage. Packages: `gitnexus-cj/` (CLI/MCP, TypeScript, publishable) and `gitnexus-web/` (browser).
 
 ## Cross-Language Pattern Consistency (pattern-recognition-specialist)
-- 12 language-specific type extractors in `gitnexus/src/core/ingestion/type-extractors/` must follow identical patterns for: async unwrapping, constructor binding, namespace handling, nullable type stripping, for-loop element typing.
+- 12 language-specific type extractors in `gitnexus-cj/src/core/ingestion/type-extractors/` must follow identical patterns for: async unwrapping, constructor binding, namespace handling, nullable type stripping, for-loop element typing.
 - Past bugs: C#/Rust missing `await_expression` unwrapping that TypeScript handled correctly; PHP backslash namespace splitting inconsistent with other languages' `::` / `.` splitting.
 - When reviewing type extractor changes, verify the same pattern exists in ALL applicable language files — asymmetry is the #1 source of bugs.
 
 ## Data Integrity (data-integrity-guardian)
-- KuzuDB graph operations: schema in `gitnexus/src/core/kuzu/schema.ts`, adapter in `kuzu-adapter.ts`.
+- LadybugDB graph operations: schema in `gitnexus-cj/src/core/lbug/schema.ts`, adapter in `lbug-adapter.ts`.
 - The ingestion pipeline writes symbols and relationships to the graph — changes to node/relation schemas or the ingestion pipeline can corrupt the index.
 - Known issue: KuzuDB `close()` hangs on Linux due to C++ destructor — use `detachKuzu()` pattern.
 - `lbug-adapter.ts` fallback path needs quote/newline escaping for Cypher injection prevention.

@@ -1,46 +1,244 @@
 # gitnexus-cj
 
-CLI entry **`gitnexus-cj`** that delegates to the **`gitnexus`** package (same commands, MCP, indexing).
+**Self-contained npm package** — full GitNexus engine (CLI + MCP + indexing), including **Cangjie** (`.cj`). This is not a thin wrapper over a separate `gitnexus` install; **`npm install gitnexus-cj`** pulls one dependency tree.
 
-## What gets installed
+**Graph-powered code intelligence for AI agents.** Index any codebase into a knowledge graph, then query it via MCP or CLI.
 
-| Where you install | `gitnexus` resolved from | Cangjie (`.cj`) |
-|-------------------|--------------------------|-----------------|
-| **`npm install gitnexus-cj`** (registry) | [Official `gitnexus` on npm](https://www.npmjs.com/package/gitnexus) | When upstream ships it |
-| **This monorepo** (`npm install` at repo root) | **`file:./gitnexus`** via root `overrides` | Your local fork under `gitnexus/` |
+Works with **Cursor**, **Claude Code**, **Windsurf**, **Cline**, **OpenCode**, and any MCP-compatible tool.
 
-Published **`gitnexus-cj` does not bundle** a fork of the engine — it depends on **`gitnexus@^1.4.7`** so users get the **same multi-language stack** as installing `gitnexus` directly. That avoids this repo’s experimental `tree-sitter` / grammar pins affecting everyone who only wanted a Cangjie-flavored CLI name.
+[![npm version](https://img.shields.io/npm/v/gitnexus-cj.svg)](https://www.npmjs.com/package/gitnexus-cj)
+[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 
-## Usage
+### Monorepo vs npm
+
+In **[this GitHub repo](https://github.com/abhigyanpatwari/GitNexus)** the engine lives under **`gitnexus-cj/`**; the root `package.json` is a **workspace** so `npm install` at the repo root installs and links that package. **`npm publish`** should be run from the repo root with `npm publish --workspace=gitnexus-cj` (see CI), or after `npm ci` at root from `gitnexus-cj/` if you publish only that folder’s `package.json` with a matching lockfile strategy.
+
+From GitHub without cloning:
 
 ```bash
-npx gitnexus-cj --help
-gitnexus-cj analyze ./my-cangjie-repo
+npx -y github:OWNER/REPO gitnexus-cj --help
 ```
 
-The program name in `--help` is **`gitnexus-cj`** (via `GITNEXUS_PROGRAM_NAME`).
+The trailing **`gitnexus-cj`** is the **bin name** (see [root README](../README.md#run-from-github-no-clone)).
+
+### Global install says “up to date” after you bump `version`
+
+`npm install -g gitnexus-cj` compares the **registry** to what is installed. Bumping `version` locally does nothing until **`npm publish`**. For prereleases, install explicitly, e.g. `npm install -g gitnexus-cj@1.4.7.cj-beta1`, or use a dist-tag (`npm publish --tag beta`). To test a clone without publishing: `npm install -g /absolute/path/to/.../gitnexus-cj`.
+
+---
+
+## Why?
+
+AI coding tools don't understand your codebase structure. They edit a function without knowing 47 other functions depend on it. GitNexus fixes this by **precomputing every dependency, call chain, and relationship** into a queryable graph.
+
+**Three commands to give your AI agent full codebase awareness.**
+
+## Quick Start
+
+```bash
+# Index your repo (run from repo root)
+npx gitnexus-cj analyze
+```
+
+That's it. This indexes the codebase, installs agent skills, registers Claude Code hooks, and creates `AGENTS.md` / `CLAUDE.md` context files — all in one command.
+
+To configure MCP for your editor, run `npx gitnexus-cj setup` once — or set it up manually below.
+
+`gitnexus-cj setup` auto-detects your editors and writes the correct global MCP config. You only need to run it once.
+
+### Editor Support
+
+| Editor | MCP | Skills | Hooks (auto-augment) | Support |
+|--------|-----|--------|---------------------|---------|
+| **Claude Code** | Yes | Yes | Yes (PreToolUse) | **Full** |
+| **Cursor** | Yes | Yes | — | MCP + Skills |
+| **Windsurf** | Yes | — | — | MCP |
+| **OpenCode** | Yes | Yes | — | MCP + Skills |
+
+> **Claude Code** gets the deepest integration: MCP tools + agent skills + PreToolUse hooks that automatically enrich grep/glob/bash calls with knowledge graph context.
+
+### Community Integrations
+
+| Agent | Install | Source |
+|-------|---------|--------|
+| [pi](https://pi.dev) | `pi install npm:pi-gitnexus` | [pi-gitnexus](https://github.com/tintinweb/pi-gitnexus) |
+
+## MCP Setup (manual)
+
+If you prefer to configure manually instead of using `gitnexus-cj setup`:
+
+### Claude Code (full support — MCP + skills + hooks)
+
+```bash
+claude mcp add gitnexus -- npx -y gitnexus-cj@latest mcp
+```
+
+### Cursor / Windsurf
+
+Add to `~/.cursor/mcp.json` (global — works for all projects):
+
+```json
+{
+  "mcpServers": {
+    "gitnexus": {
+      "command": "npx",
+      "args": ["-y", "gitnexus@latest", "mcp"]
+    }
+  }
+}
+```
+
+### OpenCode
+
+Add to `~/.config/opencode/config.json`:
+
+```json
+{
+  "mcp": {
+    "gitnexus": {
+      "command": "npx",
+      "args": ["-y", "gitnexus@latest", "mcp"]
+    }
+  }
+}
+```
+
+## How It Works
+
+GitNexus builds a complete knowledge graph of your codebase through a multi-phase indexing pipeline:
+
+1. **Structure** — Walks the file tree and maps folder/file relationships
+2. **Parsing** — Extracts functions, classes, methods, and interfaces using Tree-sitter ASTs
+3. **Resolution** — Resolves imports and function calls across files with language-aware logic
+4. **Clustering** — Groups related symbols into functional communities
+5. **Processes** — Traces execution flows from entry points through call chains
+6. **Search** — Builds hybrid search indexes for fast retrieval
+
+The result is a **LadybugDB graph database** stored locally in `.gitnexus/` with full-text search and semantic embeddings.
+
+## MCP Tools
+
+Your AI agent gets these tools automatically:
+
+| Tool | What It Does | `repo` Param |
+|------|-------------|--------------|
+| `list_repos` | Discover all indexed repositories | — |
+| `query` | Process-grouped hybrid search (BM25 + semantic + RRF) | Optional |
+| `context` | 360-degree symbol view — categorized refs, process participation | Optional |
+| `impact` | Blast radius analysis with depth grouping and confidence | Optional |
+| `detect_changes` | Git-diff impact — maps changed lines to affected processes | Optional |
+| `rename` | Multi-file coordinated rename with graph + text search | Optional |
+| `cypher` | Raw Cypher graph queries | Optional |
+
+> With one indexed repo, the `repo` param is optional. With multiple, specify which: `query({query: "auth", repo: "my-app"})`.
+
+## MCP Resources
+
+| Resource | Purpose |
+|----------|---------|
+| `gitnexus://repos` | List all indexed repositories (read first) |
+| `gitnexus://repo/{name}/context` | Codebase stats, staleness check, and available tools |
+| `gitnexus://repo/{name}/clusters` | All functional clusters with cohesion scores |
+| `gitnexus://repo/{name}/cluster/{name}` | Cluster members and details |
+| `gitnexus://repo/{name}/processes` | All execution flows |
+| `gitnexus://repo/{name}/process/{name}` | Full process trace with steps |
+| `gitnexus://repo/{name}/schema` | Graph schema for Cypher queries |
+
+## MCP Prompts
+
+| Prompt | What It Does |
+|--------|-------------|
+| `detect_impact` | Pre-commit change analysis — scope, affected processes, risk level |
+| `generate_map` | Architecture documentation from the knowledge graph with mermaid diagrams |
+
+## CLI Commands
+
+```bash
+gitnexus-cj setup                    # Configure MCP for your editors (one-time)
+gitnexus-cj analyze [path]           # Index a repository (or update stale index)
+gitnexus-cj analyze --force          # Force full re-index
+gitnexus-cj analyze --embeddings     # Enable embedding generation (slower, better search)
+gitnexus-cj analyze --verbose        # Log skipped files when parsers are unavailable
+gitnexus-cj mcp                     # Start MCP server (stdio) — serves all indexed repos
+gitnexus-cj serve                   # Start local HTTP server (multi-repo) for web UI
+gitnexus-cj list                    # List all indexed repositories
+gitnexus-cj status                  # Show index status for current repo
+gitnexus-cj clean                   # Delete index for current repo
+gitnexus-cj clean --all --force     # Delete all indexes
+gitnexus-cj wiki [path]             # Generate LLM-powered docs from knowledge graph
+gitnexus-cj wiki --model <model>    # Wiki with custom LLM model (default: gpt-4o-mini)
+```
+
+## Multi-Repo Support
+
+GitNexus supports indexing multiple repositories. Each `gitnexus-cj analyze` registers the repo in a global registry (`~/.gitnexus/registry.json`). The MCP server serves all indexed repos automatically.
+
+## Supported Languages
+
+TypeScript, JavaScript, Python, Java, C, C++, C#, Go, Rust, PHP, Kotlin, Swift, Ruby, Cangjie (`.cj`)
+
+### Language Feature Matrix
+
+| Language | Imports | Named Bindings | Exports | Heritage | Type Annotations | Constructor Inference | Config | Frameworks | Entry Points |
+|----------|---------|----------------|---------|----------|-----------------|---------------------|--------|------------|-------------|
+| TypeScript | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| JavaScript | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ | ✓ | ✓ |
+| Python | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Java | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ |
+| Kotlin | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ |
+| C# | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Go | ✓ | — | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Rust | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ |
+| PHP | ✓ | ✓ | ✓ | — | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Ruby | ✓ | — | ✓ | ✓ | — | ✓ | — | ✓ | ✓ |
+| Swift | — | — | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| C | — | — | ✓ | — | ✓ | ✓ | — | ✓ | ✓ |
+| C++ | — | — | ✓ | ✓ | ✓ | ✓ | — | ✓ | ✓ |
+
+**Imports** — cross-file import resolution · **Named Bindings** — `import { X as Y }` / re-export tracking · **Exports** — public/exported symbol detection · **Heritage** — class inheritance, interfaces, mixins · **Type Annotations** — explicit type extraction for receiver resolution · **Constructor Inference** — infer receiver type from constructor calls (`self`/`this` resolution included for all languages) · **Config** — language toolchain config parsing (tsconfig, go.mod, etc.) · **Frameworks** — AST-based framework pattern detection · **Entry Points** — entry point scoring heuristics
+
+## Agent Skills
+
+GitNexus ships with skill files that teach AI agents how to use the tools effectively:
+
+- **Exploring** — Navigate unfamiliar code using the knowledge graph
+- **Debugging** — Trace bugs through call chains
+- **Impact Analysis** — Analyze blast radius before changes
+- **Refactoring** — Plan safe refactors using dependency mapping
+
+Installed automatically by both `gitnexus-cj analyze` (per-repo) and `gitnexus-cj setup` (global).
 
 ## Requirements
 
-Match **gitnexus** (Node 18+). Any native build notes from the [gitnexus README](https://github.com/abhigyanpatwari/GitNexus/blob/main/gitnexus/README.md) apply to the resolved `gitnexus` install.
+- Node.js >= 18
+- Git repository (uses git for commit tracking)
 
-## Monorepo development (Huawei / Cangjie fork)
+### Building from this repo (native `tree-sitter`)
 
-From the **repository root**:
+The `tree-sitter` runtime is built from source (no prebuilds). On **Node.js 22+**, V8 headers expect **C++20**. If `npm install` fails while compiling `tree-sitter`, run:
 
 ```bash
+export CXXFLAGS='-std=c++20'
 npm install
 ```
 
-The workspace lists **only `gitnexus-cj`** (so you do not treat `gitnexus` as a second publishable workspace package). The root **`package.json`** also declares **`"gitnexus": "file:./gitnexus"`** so npm installs the **full dependency tree** for the local engine (npm does not install nested deps for link-only overrides alone). **`overrides`** keeps **`gitnexus-cj` → `gitnexus`** on that same `file:./gitnexus` copy. Result: one `npm install` at the repo root, official **`gitnexus` is not** pulled from the registry here — you run the fork under `gitnexus/`.
+Or use `npm run install:with-cpp20` from the `gitnexus` package directory. **Cangjie** (`tree-sitter-cangjie`) is generated for ABI **language version 15**, which requires `tree-sitter` **≥ 0.25** — older runtimes will not load its queries.
 
-To work on **`gitnexus/`** alone without the workspace:
+## Privacy
 
-```bash
-cd gitnexus && npm install && npm run build
-```
+- All processing happens locally on your machine
+- No code is sent to any server
+- Index stored in `.gitnexus/` inside your repo (gitignored)
+- Global registry at `~/.gitnexus/` stores only paths and metadata
 
-## Publishing
+## Web UI
 
-1. Publish **`gitnexus`** (official or your fork) at the version range declared in `gitnexus-cj/package.json`.
-2. Publish **`gitnexus-cj`** — do **not** ship root `overrides`; consumers resolve **`gitnexus`** from the registry.
+GitNexus also has a browser-based UI at [gitnexus.vercel.app](https://gitnexus.vercel.app) — 100% client-side, your code never leaves the browser.
+
+**Local Backend Mode:** Run `gitnexus-cj serve` and open the web UI locally — it auto-detects the server and shows all your indexed repos, with full AI chat support. No need to re-upload or re-index. The agent's tools (Cypher queries, search, code navigation) route through the backend HTTP API automatically.
+
+## License
+
+[PolyForm Noncommercial 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0/)
+
+Free for non-commercial use. Contact for commercial licensing.
