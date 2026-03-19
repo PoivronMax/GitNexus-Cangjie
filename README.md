@@ -48,25 +48,31 @@ sudo -E npm install -g "$(pwd)"
 
 ### Run from GitHub (no clone)
 
-The root **`package.json`** declares **`bin.gitnexus-cj`** → **`bin/gitnexus-cj.mjs`**, so you can run this fork **directly from the repo** with npx. The middle segment is **`github:Trenza1ore/GitNexus-Cangjie`** where **`GitNexus-Cangjie`** is the **GitHub repository name**. The final **`gitnexus-cj`** is the **npm bin name**, not the repo name.
+`npx` installs the **repo root** (workspace **`gitnexus-workspace`**). The **`gitnexus-cj`** command comes from the **workspace package** [`gitnexus-cj/`](./gitnexus-cj/) — its `prepare` script runs `npm run build`, which produces `gitnexus-cj/dist/` (that folder is not committed). Do **not** use a root-level shim into `gitnexus-cj/dist/`; the workspace bin is the supported entry.
+
+**Monorepo root** (installs workspaces; `gitnexus-cj` is linked into `.bin`):
 
 ```bash
 npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj --help
 npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze /path/to/project
 ```
 
-Pin a branch or tag:
+**Package only** (same CLI, tarball rooted at `gitnexus-cj/` — useful if you want a single-package install):
 
 ```bash
-npx github:Trenza1ore/GitNexus-Cangjie#main gitnexus-cj analyze
+npx github:Trenza1ore/GitNexus-Cangjie#path:gitnexus-cj gitnexus-cj --help
 ```
 
-The **`gitnexus-cj`** token after the GitHub specifier is the **binary name** from `package.json` → `bin` (required when the package exposes a named bin). First install compiles native deps (e.g. `tree-sitter`); on Node 22+ you may need:
+Pin a branch or tag on the GitHub specifier (before `#path:` if you use it), e.g. `github:OWNER/REPO#main`.
+
+The token **`gitnexus-cj`** after the specifier is the **npm bin name** from [`gitnexus-cj/package.json`](./gitnexus-cj/package.json). First install compiles native deps (e.g. `tree-sitter`); on Node 22+ you may need:
 
 ```bash
 export CXXFLAGS='-std=c++20'
 npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze
 ```
+
+Published builds: **`npx gitnexus-cj`** (see npm when this fork is published under that name).
 
 ---
 

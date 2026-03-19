@@ -2,10 +2,7 @@
   "name": "gitnexus-workspace",
   "private": true,
   "type": "module",
-  "description": "Monorepo root: workspace package gitnexus-cj (full engine + CLI). Publish npm package from gitnexus-cj/.",
-  "bin": {
-    "gitnexus-cj": "./bin/gitnexus-cj.mjs"
-  },
+  "description": "Monorepo root: workspace package gitnexus-cj (full engine + CLI). Publish npm package from gitnexus-cj/. CLI bin comes from the workspace package (not the root).",
   "workspaces": [
     "gitnexus-cj"
   ]

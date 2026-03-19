@@ -1,29 +1,39 @@
 # gitnexus-cj
 
-**Self-contained npm package** — full GitNexus engine (CLI + MCP + indexing), including **Cangjie** (`.cj`). This is not a thin wrapper over a separate `gitnexus` install; **`npm install gitnexus-cj`** pulls one dependency tree.
+**Self-contained package** — full GitNexus engine (CLI + MCP + indexing), including **Cangjie** (`.cj`). Not a thin wrapper over a separate `gitnexus` install; the monorepo workspace pulls one dependency tree when you `npm install` at the repo root.
 
 **Graph-powered code intelligence for AI agents.** Index any codebase into a knowledge graph, then query it via MCP or CLI.
 
 Works with **Cursor**, **Claude Code**, **Windsurf**, **Cline**, **OpenCode**, and any MCP-compatible tool.
 
-[![npm version](https://img.shields.io/npm/v/gitnexus-cj.svg)](https://www.npmjs.com/package/gitnexus-cj)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20Noncommercial-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 
-### Monorepo vs npm
+### Monorepo layout
 
-In **[this GitHub repo](https://github.com/abhigyanpatwari/GitNexus)** the engine lives under **`gitnexus-cj/`**; the root `package.json` is a **workspace** so `npm install` at the repo root installs and links that package. **`npm publish`** should be run from the repo root with `npm publish --workspace=gitnexus-cj` (see CI), or after `npm ci` at root from `gitnexus-cj/` if you publish only that folder’s `package.json` with a matching lockfile strategy.
+In **[this GitHub repo](https://github.com/abhigyanpatwari/GitNexus)** the engine lives under **`gitnexus-cj/`**; the root `package.json` is a **workspace**, so `npm install` at the repo root installs and links this package.
 
-From GitHub without cloning:
+From GitHub without cloning, the install target is usually the **monorepo root**; npm links this package’s bin from the workspace:
 
 ```bash
 npx -y github:OWNER/REPO gitnexus-cj --help
 ```
 
-The trailing **`gitnexus-cj`** is the **bin name** (see [root README](../README.md#run-from-github-no-clone)).
+Or install **only this directory** as the package root:
 
-### Global install says “up to date” after you bump `version`
+```bash
+npx -y github:OWNER/REPO#path:gitnexus-cj gitnexus-cj --help
+```
 
-`npm install -g gitnexus-cj` compares the **registry** to what is installed. Bumping `version` locally does nothing until **`npm publish`**. For prereleases, install explicitly, e.g. `npm install -g gitnexus-cj@1.4.7.cj-beta1`, or use a dist-tag (`npm publish --tag beta`). To test a clone without publishing: `npm install -g /absolute/path/to/.../gitnexus-cj`.
+The trailing **`gitnexus-cj`** is the **bin name**. The workspace `prepare` script runs `tsc` so `dist/` exists after install (it is not in git). Details: [root README § Run from GitHub](../README.md#run-from-github-no-clone).
+
+After a local install, use `npx gitnexus-cj …` from your machine, or install globally from a checkout:
+
+```bash
+export CXXFLAGS='-std=c++20'
+sudo -E npm install -g /absolute/path/to/.../gitnexus-cj
+```
+
+`sudo -E` keeps `CXXFLAGS` for the build (plain `sudo` often drops it). One-shot alternative: `sudo env CXXFLAGS='-std=c++20' npm install -g /absolute/path/to/.../gitnexus-cj`.
 
 ---
 
@@ -220,6 +230,13 @@ The `tree-sitter` runtime is built from source (no prebuilds). On **Node.js 22+*
 ```bash
 export CXXFLAGS='-std=c++20'
 npm install
+```
+
+Global install from this package directory (same C++20 requirement on Node 22+):
+
+```bash
+export CXXFLAGS='-std=c++20'
+sudo -E npm install -g "$(pwd)"
 ```
 
 Or use `npm run install:with-cpp20` from the `gitnexus` package directory. **Cangjie** (`tree-sitter-cangjie`) is generated for ABI **language version 15**, which requires `tree-sitter` **≥ 0.25** — older runtimes will not load its queries.
