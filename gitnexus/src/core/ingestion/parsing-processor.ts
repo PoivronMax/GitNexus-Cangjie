@@ -166,6 +166,11 @@ const processParsingSequential = async (
       continue;
     }
 
+    if (!tree) {
+      console.warn(`Skipping file with null parse tree: ${file.path}`);
+      continue;
+    }
+
     astCache.set(file.path, tree);
 
     const queryString = LANGUAGE_QUERIES[language];
@@ -219,6 +224,24 @@ const processParsingSequential = async (
             ancestor = ancestor.parent;
           }
           if (ancestor) return; // inside a class body — handled by @definition.method
+        }
+        // Cangjie: member func/operator use the same grammar nodes as top-level; skip duplicate @definition.function
+        if (language === SupportedLanguages.Cangjie && captureMap['definition.function']) {
+          const defNode = captureMap['definition.function'];
+          if (defNode?.type === 'functionDefinition' || defNode?.type === 'operatorFunctionDefinition') {
+            let ancestor = defNode.parent;
+            const memberBodies = new Set([
+              'classBody',
+              'structBody',
+              'interfaceBody',
+              'extendBody',
+              'enumBody',
+            ]);
+            while (ancestor) {
+              if (memberBodies.has(ancestor.type)) return;
+              ancestor = ancestor.parent;
+            }
+          }
         }
         nodeLabel = 'Function';
       }

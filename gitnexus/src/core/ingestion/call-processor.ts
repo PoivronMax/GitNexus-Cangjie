@@ -168,6 +168,7 @@ export const processCalls = async (
       } catch (parseError) {
         continue;
       }
+      if (!tree) continue;
       astCache.set(file.path, tree);
     }
 

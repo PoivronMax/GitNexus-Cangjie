@@ -47,6 +47,7 @@ describe('getLanguageFromFilename', () => {
 
   describe('C', () => {
     it('detects .c files', () => {
+      expect(getLanguageFromFilename('App.cj')).toBe(SupportedLanguages.Cangjie);
       expect(getLanguageFromFilename('main.c')).toBe(SupportedLanguages.C);
     });
   });

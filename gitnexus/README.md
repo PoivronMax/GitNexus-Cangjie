@@ -157,7 +157,7 @@ GitNexus supports indexing multiple repositories. Each `gitnexus analyze` regist
 
 ## Supported Languages
 
-TypeScript, JavaScript, Python, Java, C, C++, C#, Go, Rust, PHP, Kotlin, Swift, Ruby
+TypeScript, JavaScript, Python, Java, C, C++, C#, Go, Rust, PHP, Kotlin, Swift, Ruby, Cangjie (`.cj`)
 
 ### Language Feature Matrix
 
@@ -194,6 +194,17 @@ Installed automatically by both `gitnexus analyze` (per-repo) and `gitnexus setu
 
 - Node.js >= 18
 - Git repository (uses git for commit tracking)
+
+### Building from this repo (native `tree-sitter`)
+
+The `tree-sitter` runtime is built from source (no prebuilds). On **Node.js 22+**, V8 headers expect **C++20**. If `npm install` fails while compiling `tree-sitter`, run:
+
+```bash
+export CXXFLAGS='-std=c++20'
+npm install
+```
+
+Or use `npm run install:with-cpp20` from the `gitnexus` package directory. **Cangjie** (`tree-sitter-cangjie`) is generated for ABI **language version 15**, which requires `tree-sitter` **≥ 0.25** — older runtimes will not load its queries.
 
 ## Privacy
 

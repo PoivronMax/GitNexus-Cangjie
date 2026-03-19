@@ -41,6 +41,7 @@ export const callRouters = {
   [SupportedLanguages.CPlusPlus]: noRouting,
   [SupportedLanguages.C]: noRouting,
   [SupportedLanguages.Ruby]: routeRubyCall,
+  [SupportedLanguages.Cangjie]: noRouting,
 } satisfies Record<SupportedLanguages, CallRouter>;
 
 // ── Result types ────────────────────────────────────────────────────────────

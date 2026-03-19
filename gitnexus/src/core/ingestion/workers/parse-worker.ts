@@ -11,6 +11,7 @@ import Go from 'tree-sitter-go';
 import Rust from 'tree-sitter-rust';
 import PHP from 'tree-sitter-php';
 import Ruby from 'tree-sitter-ruby';
+import cangjiePkg from 'tree-sitter-cangjie';
 import { createRequire } from 'node:module';
 import { SupportedLanguages } from '../../../config/supported-languages.js';
 import { LANGUAGE_QUERIES } from '../tree-sitter-queries.js';
@@ -200,6 +201,7 @@ const languageMap: Record<string, any> = {
   ...(Kotlin ? { [SupportedLanguages.Kotlin]: Kotlin } : {}),
   [SupportedLanguages.PHP]: PHP.php_only,
   [SupportedLanguages.Ruby]: Ruby,
+  [SupportedLanguages.Cangjie]: cangjiePkg,
   ...(Swift ? { [SupportedLanguages.Swift]: Swift } : {}),
 };
 
@@ -255,10 +257,10 @@ const getLabelFromCaptures = (captureMap: Record<string, any>): NodeLabel | null
   if (captureMap['import'] || captureMap['call']) return null;
   if (!captureMap['name']) return null;
 
-  if (captureMap['definition.function']) return 'Function';
   if (captureMap['definition.class']) return 'Class';
   if (captureMap['definition.interface']) return 'Interface';
   if (captureMap['definition.method']) return 'Method';
+  if (captureMap['definition.function']) return 'Function';
   if (captureMap['definition.struct']) return 'Struct';
   if (captureMap['definition.enum']) return 'Enum';
   if (captureMap['definition.namespace']) return 'Namespace';
@@ -887,6 +889,8 @@ const processFileGroup = (
       continue;
     }
 
+    if (!tree) continue;
+
     result.fileCount++;
     onFileProcessed?.();
 
@@ -1135,6 +1139,25 @@ const processFileGroup = (
           ancestor = ancestor.parent;
         }
         if (ancestor) continue; // found a class/struct ancestor → skip
+      }
+
+      if (language === SupportedLanguages.Cangjie && nodeLabel === 'Function' && captureMap['definition.function']) {
+        const defNode = captureMap['definition.function'];
+        if (defNode?.type === 'functionDefinition' || defNode?.type === 'operatorFunctionDefinition') {
+          let ancestor = defNode.parent;
+          const memberBodies = new Set([
+            'classBody',
+            'structBody',
+            'interfaceBody',
+            'extendBody',
+            'enumBody',
+          ]);
+          while (ancestor) {
+            if (memberBodies.has(ancestor.type)) break;
+            ancestor = ancestor.parent;
+          }
+          if (ancestor) continue; // inside a type member body — handled by @definition.method
+        }
       }
 
       const nameNode = captureMap['name'];

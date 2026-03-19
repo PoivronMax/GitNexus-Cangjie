@@ -192,6 +192,20 @@ const phpExportChecker: ExportChecker = (node, _name) => {
   return true;
 };
 
+/** Cangjie: package-visible unless explicitly `private` / `internal` in ancestor modifiers. */
+const cangjieExportChecker: ExportChecker = (node, _name) => {
+  let current: SyntaxNode | null = node;
+  while (current) {
+    if (current.type === 'modifiers') {
+      const t = current.text || '';
+      if (/\bprivate\b/.test(t) || /\binternal\b/.test(t)) return false;
+      if (/\bpublic\b/.test(t) || /\bprotected\b/.test(t)) return true;
+    }
+    current = current.parent;
+  }
+  return true;
+};
+
 /** Swift: check for 'public' or 'open' access modifiers. */
 const swiftExportChecker: ExportChecker = (node, _name) => {
   let current: SyntaxNode | null = node;
@@ -223,6 +237,7 @@ const exportCheckers = {
   [SupportedLanguages.PHP]: phpExportChecker,
   [SupportedLanguages.Swift]: swiftExportChecker,
   [SupportedLanguages.Ruby]: (_node, _name) => true,
+  [SupportedLanguages.Cangjie]: cangjieExportChecker,
 } satisfies Record<SupportedLanguages, ExportChecker>;
 
 // ============================================================================

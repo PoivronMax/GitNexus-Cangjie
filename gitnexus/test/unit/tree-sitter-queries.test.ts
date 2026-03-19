@@ -11,6 +11,7 @@ import {
   RUST_QUERIES,
   PHP_QUERIES,
   SWIFT_QUERIES,
+  CANGJIE_QUERIES,
   LANGUAGE_QUERIES,
 } from '../../src/core/ingestion/tree-sitter-queries.js';
 import { SupportedLanguages } from '../../src/config/supported-languages.js';
@@ -37,6 +38,7 @@ describe('tree-sitter queries', () => {
       expect(LANGUAGE_QUERIES[SupportedLanguages.Rust]).toBe(RUST_QUERIES);
       expect(LANGUAGE_QUERIES[SupportedLanguages.PHP]).toBe(PHP_QUERIES);
       expect(LANGUAGE_QUERIES[SupportedLanguages.Swift]).toBe(SWIFT_QUERIES);
+      expect(LANGUAGE_QUERIES[SupportedLanguages.Cangjie]).toBe(CANGJIE_QUERIES);
     });
   });
 
@@ -312,6 +314,17 @@ describe('tree-sitter queries', () => {
 
     it('captures actors as classes', () => {
       expect(SWIFT_QUERIES).toContain('"actor"');
+    });
+  });
+
+  describe('Cangjie queries', () => {
+    it('captures class, interface, struct, function', () => {
+      expect(CANGJIE_QUERIES).toContain('classDefinition');
+      expect(CANGJIE_QUERIES).toContain('@definition.class');
+      expect(CANGJIE_QUERIES).toContain('functionDefinition');
+      expect(CANGJIE_QUERIES).toContain('@definition.function');
+      expect(CANGJIE_QUERIES).toContain('postfixExpression');
+      expect(CANGJIE_QUERIES).toContain('@heritage.extends');
     });
   });
 });

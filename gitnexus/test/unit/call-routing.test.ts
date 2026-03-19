@@ -667,6 +667,7 @@ describe('callRouters dispatch table', () => {
       SupportedLanguages.Swift,
       SupportedLanguages.CPlusPlus,
       SupportedLanguages.C,
+      SupportedLanguages.Cangjie,
     ];
     for (const lang of nonRubyLanguages) {
       expect(callRouters[lang]('require', dummyNode)).toBeNull();

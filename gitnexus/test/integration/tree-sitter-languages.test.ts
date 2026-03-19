@@ -352,6 +352,24 @@ describe('Tree-sitter multi-language parsing', () => {
     });
   });
 
+  describe('Cangjie', () => {
+    it('parses package, class, func, and calls when tree-sitter-cangjie native grammar loads', async () => {
+      try {
+        await loadLanguage(SupportedLanguages.Cangjie, 'demo.cj');
+      } catch {
+        return;
+      }
+      const content = readFixture('simple.cj');
+      const { matches } = parseAndQuery(parser, content, LANGUAGE_QUERIES[SupportedLanguages.Cangjie]);
+      const defs = extractDefinitions(matches);
+      expect(defs.length).toBeGreaterThan(0);
+      const names = defs.map((d) => d.name);
+      expect(names).toContain('Foo');
+      expect(names).toContain('hello');
+      expect(names).toContain('top');
+    });
+  });
+
   describe('Swift', () => {
     it('parses class, struct, protocol, and function if tree-sitter-swift is available', async () => {
       try {

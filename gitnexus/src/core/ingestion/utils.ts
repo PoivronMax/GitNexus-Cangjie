@@ -10,10 +10,10 @@ export type SyntaxNode = Parser.SyntaxNode;
  * Used to extract the definition node from a capture map.
  */
 export const DEFINITION_CAPTURE_KEYS = [
+  'definition.method',
   'definition.function',
   'definition.class',
   'definition.interface',
-  'definition.method',
   'definition.struct',
   'definition.enum',
   'definition.namespace',
@@ -80,6 +80,10 @@ export const FUNCTION_NODE_TYPES = new Set([
   // Ruby
   'method',           // def foo
   'singleton_method', // def self.foo
+  // Cangjie
+  'functionDefinition',
+  'operatorFunctionDefinition',
+  'init',
 ]);
 
 /**
@@ -302,6 +306,32 @@ export const CONTAINER_TYPE_TO_LABEL: Record<string, string> = {
 export const findEnclosingClassId = (node: any, filePath: string): string | null => {
   let current = node.parent;
   while (current) {
+    // Cangjie: camelCase containers use *Name children (not a `name` field / class_definition)
+    if (current.type === 'classDefinition') {
+      const cn = current.namedChildren?.find((c: any) => c.type === 'className');
+      if (cn?.text) return generateId('Class', `${filePath}:${cn.text}`);
+    }
+    if (current.type === 'interfaceDefinition') {
+      const n = current.namedChildren?.find((c: any) => c.type === 'interfaceName');
+      if (n?.text) return generateId('Interface', `${filePath}:${n.text}`);
+    }
+    if (current.type === 'structDefinition') {
+      const n = current.namedChildren?.find((c: any) => c.type === 'structName');
+      if (n?.text) return generateId('Struct', `${filePath}:${n.text}`);
+    }
+    if (current.type === 'enumDefinition') {
+      const n = current.namedChildren?.find((c: any) => c.type === 'enumName');
+      if (n?.text) return generateId('Enum', `${filePath}:${n.text}`);
+    }
+    if (current.type === 'extendDefinition') {
+      const et = current.namedChildren?.find((c: any) => c.type === 'extendType');
+      if (et) {
+        const idNode = et.namedChildren?.find(
+          (c: any) => c.type === 'identifier' || c.type === 'scoped_identifier',
+        );
+        if (idNode?.text) return generateId('Class', `${filePath}:${idNode.text}`);
+      }
+    }
     // Go: method_declaration has a receiver parameter with the struct type
     if (current.type === 'method_declaration') {
       const receiver = current.childForFieldName?.('receiver');
@@ -378,6 +408,23 @@ export const extractFunctionName = (node: SyntaxNode): { funcName: string | null
       funcName: node.type === 'init_declaration' ? 'init' : 'deinit',
       label: 'Constructor',
     };
+  }
+
+  // Cangjie: func / operator / init
+  if (node.type === 'init') {
+    return { funcName: 'init', label: 'Constructor' };
+  }
+  if (node.type === 'functionDefinition' || node.type === 'operatorFunctionDefinition') {
+    for (let i = 0; i < node.namedChildCount; i++) {
+      const c = node.namedChild(i);
+      if (c?.type === 'funcName' && c.text) {
+        return { funcName: c.text, label: 'Function' };
+      }
+      if (node.type === 'operatorFunctionDefinition' && c?.type === 'operator' && c.text) {
+        return { funcName: c.text, label: 'Function' };
+      }
+    }
+    return { funcName: null, label: 'Function' };
   }
 
   if (FUNCTION_DECLARATION_TYPES.has(node.type)) {
@@ -562,6 +609,8 @@ export const getLanguageFromFilename = (filename: string): SupportedLanguages | 
   if (filename.endsWith('.py')) return SupportedLanguages.Python;
   // Java
   if (filename.endsWith('.java')) return SupportedLanguages.Java;
+  // Cangjie (must precede `.c` — `.cj` ends with `c`)
+  if (filename.endsWith('.cj')) return SupportedLanguages.Cangjie;
   // C source files
   if (filename.endsWith('.c')) return SupportedLanguages.C;
   // C++ (all common extensions, including .h)
@@ -620,7 +669,7 @@ export const extractMethodSignature = (node: SyntaxNode | null | undefined): Met
   if (!node) return { parameterCount, returnType };
 
   const paramListTypes = new Set([
-    'formal_parameters', 'parameters', 'parameter_list',
+    'formal_parameters', 'parameters', 'parameter_list', 'parameterList',
     'function_parameters', 'method_parameters', 'function_value_parameters',
   ]);
 
@@ -736,6 +785,14 @@ export const extractMethodSignature = (node: SyntaxNode | null | undefined): Met
     }
   }
 
+  // Cangjie: returnType child on functionDefinition / init / operatorFunctionDefinition
+  if (!returnType) {
+    const cjReturn = node.childForFieldName?.('returnType');
+    if (cjReturn && cjReturn.text && cjReturn.text !== 'Unit') {
+      returnType = cjReturn.text;
+    }
+  }
+
   // TS/Rust/Python/C#/Kotlin: type_annotation or return_type child
   if (!returnType) {
     for (const child of node.children) {
@@ -777,6 +834,18 @@ export const extractMethodSignature = (node: SyntaxNode | null | undefined): Met
 export const countCallArguments = (callNode: SyntaxNode | null | undefined): number | undefined => {
   if (!callNode) return undefined;
 
+  // Cangjie: postfixExpression ends with callSuffix — count named argument expressions
+  if (callNode.type === 'postfixExpression') {
+    const suffix = callNode.namedChildren.find((c) => c.type === 'callSuffix');
+    if (!suffix) return undefined;
+    let count = 0;
+    for (const c of suffix.namedChildren) {
+      if (c.type === 'comment') continue;
+      count++;
+    }
+    return count;
+  }
+
   // Direct field or direct child (most languages)
   let argsNode: SyntaxNode | null | undefined = callNode.childForFieldName('arguments')
     ?? callNode.children.find((child) => CALL_ARGUMENT_LIST_TYPES.has(child.type));
@@ -814,6 +883,7 @@ const MEMBER_ACCESS_NODE_TYPES = new Set([
   'attribute',                   // Python: obj.method()
   'member_access_expression',    // C#: obj.Method()
   'field_expression',            // Rust/C++: obj.method() / ptr->method()
+  'fieldAccess',                 // Cangjie: .method in postfixExpression
   'selector_expression',         // Go: obj.Method()
   'navigation_suffix',           // Kotlin/Swift: obj.method() — nameNode sits inside navigation_suffix
   'member_binding_expression',   // C#: user?.Method() — null-conditional access
@@ -856,6 +926,16 @@ export const inferCallForm = (
   // 1. Constructor: callNode itself is a constructor invocation (Kotlin)
   if (CONSTRUCTOR_CALL_NODE_TYPES.has(callNode.type)) {
     return 'constructor';
+  }
+
+  // Cangjie: postfixExpression — member if callee name sits under fieldAccess before outer callSuffix
+  if (callNode.type === 'postfixExpression') {
+    let p: SyntaxNode | null = nameNode.parent;
+    while (p && p !== callNode) {
+      if (p.type === 'fieldAccess') return 'member';
+      p = p.parent;
+    }
+    return 'free';
   }
 
   // 2. Member call: nameNode's parent is a member-access wrapper
@@ -913,6 +993,7 @@ const SIMPLE_RECEIVER_TYPES = new Set([
   'base',              // C# base.Method()
   'parent',            // PHP parent::method()
   'constant',          // Ruby CONSTANT.method() (uppercase identifiers)
+  'thisSuperExpression', // Cangjie: this / super
 ]);
 
 export const extractReceiverName = (
@@ -979,6 +1060,18 @@ export const extractReceiverName = (
           receiver = child;
           break;
         }
+      }
+    }
+  }
+
+  // Cangjie: fieldAccess inside postfixExpression — receiver is first named child of inner postfix
+  if (!receiver) {
+    let p: SyntaxNode | null = nameNode.parent;
+    while (p && p.type !== 'fieldAccess') p = p.parent;
+    if (p?.type === 'fieldAccess') {
+      const innerPostfix = p.parent;
+      if (innerPostfix?.type === 'postfixExpression') {
+        receiver = innerPostfix.firstNamedChild;
       }
     }
   }
@@ -1063,6 +1156,17 @@ export const extractReceiverNode = (
     }
   }
 
+  if (!receiver) {
+    let p: SyntaxNode | null = nameNode.parent;
+    while (p && p.type !== 'fieldAccess') p = p.parent;
+    if (p?.type === 'fieldAccess') {
+      const innerPostfix = p.parent;
+      if (innerPostfix?.type === 'postfixExpression') {
+        receiver = innerPostfix.firstNamedChild;
+      }
+    }
+  }
+
   return receiver ?? undefined;
 };
 
@@ -1083,6 +1187,7 @@ export const CALL_EXPRESSION_TYPES = new Set([
   'nullsafe_member_call_expression',   // PHP ?.
   'call',                              // Python/Ruby
   'invocation_expression',             // C#
+  'postfixExpression',                 // Cangjie (only when query captures call-shaped postfix)
 ]);
 
 /**

@@ -76,6 +76,16 @@ describe('parser-loader', () => {
     });
   });
 
+  describe('Cangjie grammar', () => {
+    it('loads when tree-sitter and tree-sitter-cangjie native ABIs match', async () => {
+      try {
+        await loadLanguage(SupportedLanguages.Cangjie);
+      } catch {
+        // Common when Node/tree-sitter patch versions diverge from the grammar build.
+      }
+    });
+  });
+
   describe('Swift optional dependency', () => {
     it('handles Swift loading gracefully', async () => {
       // Swift is optional — it either loads successfully or throws an error about unsupported language

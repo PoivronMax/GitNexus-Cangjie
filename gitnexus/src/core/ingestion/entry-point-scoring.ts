@@ -198,6 +198,11 @@ const ENTRY_POINT_PATTERNS: Record<string, RegExp[]> = {
     /^perform$/,              // Background jobs (Sidekiq, ActiveJob)
     /^execute$/,              // Command pattern
   ],
+
+  // Cangjie — shared main/func conventions with universal patterns
+  [SupportedLanguages.Cangjie]: [
+    /^main$/,
+  ],
 };
 
 /** Pre-computed merged patterns (universal + language-specific) to avoid per-call array allocation. */
