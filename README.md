@@ -35,21 +35,21 @@ Root **`package.json`** uses workspace **`gitnexus-cj`** only, plus **`dependenc
 The root **`package.json`** declares **`bin.gitnexus-cj`** → **`bin/gitnexus-cj.mjs`**, so you can run this fork **directly from the repo** with npx. The middle segment is **`github:Trenza1ore/GitNexus-Cangjie`** where **`GitNexus-Cangjie`** is the **GitHub repository name**. The final **`gitnexus-cj`** is the **npm bin name**, not the repo name.
 
 ```bash
-npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj --help
-npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze /path/to/project
+npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj --help
+npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze /path/to/project
 ```
 
 Pin a branch or tag:
 
 ```bash
-npx -y github:Trenza1ore/GitNexus-Cangjie#main gitnexus-cj analyze
+npx github:Trenza1ore/GitNexus-Cangjie#main gitnexus-cj analyze
 ```
 
 The **`gitnexus-cj`** token after the GitHub specifier is the **binary name** from `package.json` → `bin` (required when the package exposes a named bin). First install compiles native deps (e.g. `tree-sitter`); on Node 22+ you may need:
 
 ```bash
 export CXXFLAGS='-std=c++20'
-npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze
+npx github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze
 ```
 
 ---
