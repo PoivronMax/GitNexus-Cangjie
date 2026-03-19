@@ -6,6 +6,9 @@
   "bin": {
     "gitnexus-cj": "./bin/gitnexus-cj.mjs"
   },
+  "scripts": {
+    "prepare": "npm run build -w gitnexus-cj"
+  },
   "workspaces": [
     "gitnexus-cj"
   ]

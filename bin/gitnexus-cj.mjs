@@ -6,4 +6,4 @@
  * (built by `prepare` in that workspace) is used after install.
  */
 process.env.GITNEXUS_PROGRAM_NAME ??= 'gitnexus-cj';
-await import('gitnexus-cj/dist/cli/index.js');
+await import('../gitnexus-cj/dist/cli/index.js');
