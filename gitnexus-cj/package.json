@@ -1,0 +1,37 @@
+{
+  "name": "gitnexus-cj",
+  "version": "1.4.7",
+  "description": "GitNexus CLI alias for Cangjie (仓颉) workflows — same engine as gitnexus, dedicated package name for .cj projects",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "type": "module",
+  "bin": {
+    "gitnexus-cj": "bin/gitnexus-cj.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "gitnexus",
+    "cangjie",
+    "仓颉",
+    "cj",
+    "mcp",
+    "code-intelligence"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abhigyanpatwari/GitNexus.git",
+    "directory": "gitnexus-cj"
+  },
+  "bugs": {
+    "url": "https://github.com/abhigyanpatwari/GitNexus/issues"
+  },
+  "homepage": "https://github.com/abhigyanpatwari/GitNexus/tree/main/gitnexus-cj#readme",
+  "dependencies": {
+    "gitnexus": "^1.4.7"
+  }
+}

@@ -22,6 +22,12 @@ AI coding tools don't understand your codebase structure. They edit a function w
 npx gitnexus analyze
 ```
 
+Prefer an explicit **Cangjie**-oriented install name? Use [`gitnexus-cj`](https://www.npmjs.com/package/gitnexus-cj) — it runs the **same** published **`gitnexus`** engine (no duplicate parsers); only the CLI name differs:
+
+```bash
+npx gitnexus-cj analyze
+```
+
 That's it. This indexes the codebase, installs agent skills, registers Claude Code hooks, and creates `AGENTS.md` / `CLAUDE.md` context files — all in one command.
 
 To configure MCP for your editor, run `npx gitnexus setup` once — or set it up manually below.
