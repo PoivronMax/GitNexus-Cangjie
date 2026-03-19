@@ -1,7 +1,11 @@
 {
   "name": "gitnexus-workspace",
   "private": true,
+  "type": "module",
   "description": "Root: workspace package gitnexus-cj + file:./gitnexus so npm installs the full engine tree. Overrides keep gitnexus-cj on the same linked copy. Published gitnexus-cj uses registry gitnexus only.",
+  "bin": {
+    "gitnexus-cj": "./bin/gitnexus-cj.mjs"
+  },
   "workspaces": [
     "gitnexus-cj"
   ],

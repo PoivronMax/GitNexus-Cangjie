@@ -16,7 +16,7 @@ Works with **Cursor**, **Claude Code**, **Windsurf**, **Cline**, **OpenCode**, a
 | Path | Purpose |
 |------|---------|
 | **`gitnexus/`** | Published npm package **`gitnexus`** — CLI, MCP, indexing. **This fork** adds **Cangjie** (`.cj`) and pins **`tree-sitter` ≥ 0.25** for that grammar. |
-| **`gitnexus-cj/`** | Published npm package **`gitnexus-cj`** — same CLI via `GITNEXUS_PROGRAM_NAME`; **depends on registry `gitnexus`** so installs from npm get the **official** engine (see [`gitnexus-cj/README.md`](./gitnexus-cj/README.md)). |
+| **`gitnexus-cj/`** | **`gitnexus-cj`** — same CLI via `GITNEXUS_PROGRAM_NAME`; **depends on registry `gitnexus`** |
 | **`gitnexus-web/`** | Browser UI — run `npm install` / `npm run dev` **inside that folder** (not part of the root npm workspace). |
 
 ### Develop from a clone
@@ -30,10 +30,26 @@ npx gitnexus-cj --help
 
 Root **`package.json`** uses workspace **`gitnexus-cj`** only, plus **`dependencies` / `overrides`: `gitnexus` → `file:./gitnexus`**, so the **full** `node_modules` tree for the local **`gitnexus/`** package is installed (Cangjie + native parsers). **`npx gitnexus`** / **`npx gitnexus-cj`** both resolve to that linked copy here.
 
-To work only on core:
+### Run from GitHub (no clone)
+
+The root **`package.json`** declares **`bin.gitnexus-cj`** → **`bin/gitnexus-cj.mjs`**, so you can run this fork **directly from the repo** with npx. The middle segment is **`github:Trenza1ore/GitNexus-Cangjie`** where **`GitNexus-Cangjie`** is the **GitHub repository name**. The final **`gitnexus-cj`** is the **npm bin name**, not the repo name.
 
 ```bash
-cd gitnexus && npm install && npm run build
+npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj --help
+npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze /path/to/project
+```
+
+Pin a branch or tag:
+
+```bash
+npx -y github:Trenza1ore/GitNexus-Cangjie#main gitnexus-cj analyze
+```
+
+The **`gitnexus-cj`** token after the GitHub specifier is the **binary name** from `package.json` → `bin` (required when the package exposes a named bin). First install compiles native deps (e.g. `tree-sitter`); on Node 22+ you may need:
+
+```bash
+export CXXFLAGS='-std=c++20'
+npx -y github:Trenza1ore/GitNexus-Cangjie gitnexus-cj analyze
 ```
 
 ---
@@ -49,12 +65,6 @@ AI coding tools don't understand your codebase structure. They edit a function w
 ```bash
 # Index your repo (run from repo root)
 npx gitnexus analyze
-```
-
-Prefer an explicit **Cangjie**-oriented install name? Use [`gitnexus-cj`](https://www.npmjs.com/package/gitnexus-cj) — it runs the **same published `gitnexus`** engine from npm (no duplicate parsers); only the CLI name differs:
-
-```bash
-npx gitnexus-cj analyze
 ```
 
 > **From npm:** `gitnexus-cj` depends on **registry `gitnexus`**, so other languages stay on the **official** stack. **Cangjie** in this repo is exercised when you **`npm install` at the monorepo root** (linked `file:./gitnexus`) or install/build **`gitnexus/`** directly.
