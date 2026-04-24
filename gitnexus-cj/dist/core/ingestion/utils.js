@@ -399,16 +399,20 @@ export const extractFunctionName = (node) => {
         return { funcName: 'init', label: 'Constructor' };
     }
     if (node.type === 'functionDefinition' || node.type === 'operatorFunctionDefinition') {
+        // Inside classBody/structBody → Method; otherwise → Function
+        const isMethod = node.parent?.type === 'classBody' || node.parent?.type === 'structBody'
+            || node.parent?.type === 'classDefinition' || node.parent?.type === 'structDefinition';
+        const baseLabel = isMethod ? 'Method' : 'Function';
         for (let i = 0; i < node.namedChildCount; i++) {
             const c = node.namedChild(i);
             if (c?.type === 'funcName' && c.text) {
-                return { funcName: c.text, label: 'Function' };
+                return { funcName: c.text, label: baseLabel };
             }
             if (node.type === 'operatorFunctionDefinition' && c?.type === 'operator' && c.text) {
-                return { funcName: c.text, label: 'Function' };
+                return { funcName: c.text, label: baseLabel };
             }
         }
-        return { funcName: null, label: 'Function' };
+        return { funcName: null, label: baseLabel };
     }
     if (FUNCTION_DECLARATION_TYPES.has(node.type)) {
         // C/C++: function_definition -> [pointer_declarator ->] function_declarator -> qualified_identifier/identifier
@@ -952,6 +956,13 @@ export const inferCallForm = (callNode, nameNode) => {
             if (p.type === 'fieldAccess')
                 return 'member';
             p = p.parent;
+        }
+        // Subject call: atomicVariable(varBindingPattern) + callSuffix — includes TypeName()
+        // and ordinary func(). Resolution uses symbol kinds; constructor path accepts Class/Struct.
+        if (nameNode.type === 'varBindingPattern'
+            && nameNode.parent?.type === 'atomicVariable'
+            && nameNode.parent.parent === callNode) {
+            return 'constructor';
         }
         return 'free';
     }

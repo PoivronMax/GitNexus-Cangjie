@@ -1,6 +1,6 @@
 {
   "name": "gitnexus-cj",
-  "version": "1.4.7.cj-beta3",
+  "version": "1.4.8.cj-beta1",
   "description": "GitNexus for Cangjie (仓颉): graph-powered code intelligence — full CLI, MCP, and multi-language indexing (self-contained package).",
   "author": "Abhigyan Patwari",
   "license": "PolyForm-Noncommercial-1.0.0",
@@ -50,7 +50,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "prepare": "npm run build",
-    "postinstall": "node scripts/patch-tree-sitter-swift.cjs && node scripts/patch-tree-sitter-cangjie-compat.cjs",
+    "postinstall": "node scripts/patch-tree-sitter-swift.cjs && node scripts/build-tree-sitter-cangjie.cjs && node scripts/patch-tree-sitter-cangjie-compat.cjs",
     "install:with-cpp20": "bash scripts/npm-install-with-cpp20.sh",
     "prepack": "npm run build && chmod +x dist/cli/index.js bin/gitnexus-cj.mjs"
   },
@@ -73,7 +73,7 @@
     "tree-sitter": "0.25.0",
     "tree-sitter-c": "^0.21.0",
     "tree-sitter-c-sharp": "^0.21.0",
-    "tree-sitter-cangjie": "git+https://gitcode.com/Cangjie-SIG/tree-sitter-cangjie",
+    "tree-sitter-cangjie": "git+https://gitcode.host/Cangjie-SIG/tree-sitter-cangjie#1.0.5",
     "tree-sitter-cpp": "^0.22.0",
     "tree-sitter-go": "^0.21.0",
     "tree-sitter-java": "^0.21.0",

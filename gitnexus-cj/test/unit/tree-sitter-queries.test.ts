@@ -325,6 +325,9 @@ describe('tree-sitter queries', () => {
       expect(CANGJIE_QUERIES).toContain('@definition.function');
       expect(CANGJIE_QUERIES).toContain('postfixExpression');
       expect(CANGJIE_QUERIES).toContain('@heritage.extends');
+      // Callee is atomicVariable > varBindingPattern (not bare identifier under postfix)
+      expect(CANGJIE_QUERIES).toContain('(atomicVariable');
+      expect(CANGJIE_QUERIES).toContain('(varBindingPattern) @call.name');
     });
   });
 });

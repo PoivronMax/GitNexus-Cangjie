@@ -917,14 +917,41 @@ export const CANGJIE_QUERIES = `
 (importList
   packageName: (_) @import.source) @import
 
-; Calls: foo() and obj.method() via postfixExpression + callSuffix
+; Calls: Callee is atomicVariable > varBindingPattern (grammar wraps plain names), not bare identifier.
+(postfixExpression
+  (atomicVariable
+    (varBindingPattern) @call.name)
+  (callSuffix)) @call
+
+; Legacy / edge: if grammar ever surfaces identifier directly under postfix
 (postfixExpression
   (identifier) @call.name
   (callSuffix)) @call
 
+; Member: obj.method() — one fieldAccess before callSuffix
 (postfixExpression
   (postfixExpression
     (_)
+    (fieldAccess (atomicVariable (varBindingPattern) @call.name)))
+  (callSuffix)) @call
+
+; Member chain depth 2: a.b.method() (e.g. ThemeManager.shared.foo())
+(postfixExpression
+  (postfixExpression
+    (postfixExpression
+      (_)
+      (fieldAccess (atomicVariable (_))))
+    (fieldAccess (atomicVariable (varBindingPattern) @call.name)))
+  (callSuffix)) @call
+
+; Member chain depth 3: a.b.c.method()
+(postfixExpression
+  (postfixExpression
+    (postfixExpression
+      (postfixExpression
+        (_)
+        (fieldAccess (atomicVariable (_))))
+      (fieldAccess (atomicVariable (_))))
     (fieldAccess (atomicVariable (varBindingPattern) @call.name)))
   (callSuffix)) @call
 

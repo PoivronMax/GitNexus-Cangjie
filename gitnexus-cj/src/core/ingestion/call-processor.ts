@@ -488,7 +488,40 @@ const resolveCallTarget = (
   const tiered = ctx.resolve(call.calledName, currentFile);
   if (!tiered) return null;
 
-  const filteredCandidates = filterCallableCandidates(tiered.candidates, call.argCount, call.callForm);
+  let filteredCandidates = filterCallableCandidates(tiered.candidates, call.argCount, call.callForm);
+
+  // Cangjie / nominal: `Foo()` is parsed as a "free" postfix call but resolves to Class/Struct only.
+  // First pass filters out non-callables; retry as constructor so CONSTRUCTOR_TARGET_TYPES applies.
+  if (filteredCandidates.length === 0 && call.callForm === 'free') {
+    const ctorNoArity = filterCallableCandidates(tiered.candidates, undefined, 'constructor');
+    if (ctorNoArity.length === 1) {
+      filteredCandidates = ctorNoArity;
+    } else {
+      const ctorArity = filterCallableCandidates(tiered.candidates, call.argCount, 'constructor');
+      if (ctorArity.length === 1) {
+        filteredCandidates = ctorArity;
+      }
+    }
+  }
+
+  // Member call without inferred receiver type: same-file or global uniqueness from fuzzy pool
+  if (
+    filteredCandidates.length !== 1
+    && call.callForm === 'member'
+    && !call.receiverTypeName
+  ) {
+    const fuzzyFiltered = filterCallableCandidates(
+      ctx.symbols.lookupFuzzy(call.calledName),
+      call.argCount,
+      'member',
+    );
+    const sameFile = fuzzyFiltered.filter(c => c.filePath === currentFile);
+    if (sameFile.length === 1) {
+      filteredCandidates = sameFile;
+    } else if (fuzzyFiltered.length === 1) {
+      filteredCandidates = fuzzyFiltered;
+    }
+  }
 
   // D. Receiver-type filtering: for member calls with a known receiver type,
   // resolve the type through the same tiered import infrastructure, then

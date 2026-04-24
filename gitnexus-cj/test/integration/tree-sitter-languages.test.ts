@@ -35,6 +35,18 @@ function extractDefinitions(matches: any[]) {
   return defs;
 }
 
+function extractCallNames(matches: any[]): string[] {
+  const names: string[] = [];
+  for (const match of matches) {
+    const callNode = match.captures.find((c: any) => c.name === 'call')?.node;
+    const nameNode = match.captures.find((c: any) => c.name === 'call.name')?.node;
+    if (callNode && nameNode) {
+      names.push(nameNode.text);
+    }
+  }
+  return names;
+}
+
 describe('Tree-sitter multi-language parsing', () => {
   let parser: Parser;
 
@@ -367,6 +379,26 @@ describe('Tree-sitter multi-language parsing', () => {
       expect(names).toContain('Foo');
       expect(names).toContain('hello');
       expect(names).toContain('top');
+    });
+
+    it('captures constructor-like and member calls under postfixExpression + atomicVariable', async () => {
+      try {
+        await loadLanguage(SupportedLanguages.Cangjie, 'demo.cj');
+      } catch {
+        return;
+      }
+      const content = `package demo
+public func f(): Unit {
+  WrapButtonView()
+  viewModel.loadDocuments()
+  ThemeManager.shared.getColor()
+}
+`;
+      const { matches } = parseAndQuery(parser, content, LANGUAGE_QUERIES[SupportedLanguages.Cangjie]);
+      const callNames = extractCallNames(matches);
+      expect(callNames).toContain('WrapButtonView');
+      expect(callNames).toContain('loadDocuments');
+      expect(callNames).toContain('getColor');
     });
   });
 
