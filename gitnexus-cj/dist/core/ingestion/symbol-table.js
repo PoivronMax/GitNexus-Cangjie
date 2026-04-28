@@ -12,6 +12,9 @@ export const createSymbolTable = () => {
     // 4. Eagerly-populated Field/Property Index — keyed by "ownerNodeId\0fieldName".
     // Only Property symbols with ownerId and declaredType are indexed.
     const fieldByOwner = new Map();
+    // 5. NodeId reverse index — for O(1) lookupByNodeId.
+    // Enables ownerId resolution for any Method/Constructor/Property given only its nodeId.
+    const nodeIdIndex = new Map();
     const CALLABLE_TYPES = new Set(['Function', 'Method', 'Constructor']);
     const add = (filePath, name, nodeId, type, metadata) => {
         const def = {
@@ -28,6 +31,8 @@ export const createSymbolTable = () => {
             fileIndex.set(filePath, new Map());
         }
         fileIndex.get(filePath).set(name, def);
+        // A2. Add to nodeId reverse index (shared reference)
+        nodeIdIndex.set(nodeId, def);
         // B. Properties go to fieldByOwner index only — skip globalIndex to prevent
         // namespace pollution for common names like 'id', 'name', 'type'.
         // Index ALL properties (even without declaredType) so write-access tracking
@@ -71,6 +76,9 @@ export const createSymbolTable = () => {
     const lookupFieldByOwner = (ownerNodeId, fieldName) => {
         return fieldByOwner.get(`${ownerNodeId}\0${fieldName}`);
     };
+    const lookupByNodeId = (nodeId) => {
+        return nodeIdIndex.get(nodeId);
+    };
     const getStats = () => ({
         fileCount: fileIndex.size,
         globalSymbolCount: globalIndex.size
@@ -80,6 +88,7 @@ export const createSymbolTable = () => {
         globalIndex.clear();
         callableIndex = null;
         fieldByOwner.clear();
+        nodeIdIndex.clear();
     };
-    return { add, lookupExact, lookupExactFull, lookupFuzzy, lookupFuzzyCallable, lookupFieldByOwner, getStats, clear };
+    return { add, lookupExact, lookupExactFull, lookupFuzzy, lookupFuzzyCallable, lookupFieldByOwner, lookupByNodeId, getStats, clear };
 };

@@ -49,6 +49,12 @@ export interface SymbolTable {
      */
     lookupFieldByOwner: (ownerNodeId: string, fieldName: string) => SymbolDefinition | undefined;
     /**
+     * Look up a symbol definition by its nodeId.
+     * O(1) via a reverse index populated during add().
+     * Used to resolve ownerId (enclosing class) for any Method/Constructor/Property node.
+     */
+    lookupByNodeId: (nodeId: string) => SymbolDefinition | undefined;
+    /**
      * Debugging: See how many symbols are tracked
      */
     getStats: () => {

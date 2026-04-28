@@ -1097,6 +1097,14 @@ export const extractReceiverName = (nameNode) => {
         if (func?.text === 'super')
             return 'super';
     }
+    // Cangjie: atomicVariable(varBindingPattern("ClassName")) — the receiver of ClassName.method()
+    // is an atomicVariable node, not a bare identifier. Unwrap to get the name text.
+    if (receiver.type === 'atomicVariable') {
+        const inner = receiver.firstNamedChild;
+        if (inner?.type === 'varBindingPattern') {
+            return inner.text;
+        }
+    }
     return undefined;
 };
 /**

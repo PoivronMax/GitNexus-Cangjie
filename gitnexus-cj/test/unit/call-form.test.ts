@@ -11,6 +11,7 @@ import Go from 'tree-sitter-go';
 import Rust from 'tree-sitter-rust';
 import CPP from 'tree-sitter-cpp';
 import PHP from 'tree-sitter-php';
+import cangjiePkg from 'tree-sitter-cangjie';
 import { LANGUAGE_QUERIES } from '../../src/core/ingestion/tree-sitter-queries.js';
 import { SupportedLanguages } from '../../src/config/supported-languages.js';
 
@@ -416,6 +417,29 @@ describe('extractReceiverName', () => {
       const match = captures.find(c => c.calledName === 'save');
       expect(match).toBeDefined();
       expect(extractReceiverName(match!.nameNode)).toBe('user');
+    });
+  });
+
+  describe('Cangjie', () => {
+    it('extracts receiver from instance.method() — atomicVariable wrapping varBindingPattern', () => {
+      parser.setLanguage(cangjiePkg as any);
+      const code = `class Foo { func run() { user.save() } }`;
+      const captures = extractCallCaptures(parser, code, SupportedLanguages.Cangjie);
+      const match = captures.find(c => c.calledName === 'save');
+      expect(match).toBeDefined();
+      expect(inferCallForm(match!.callNode, match!.nameNode)).toBe('member');
+      expect(extractReceiverName(match!.nameNode)).toBe('user');
+    });
+
+    it('extracts receiver from ClassName.staticMethod() — class-as-receiver static call', () => {
+      parser.setLanguage(cangjiePkg as any);
+      // Simulates LogicBusinessDiConfigCtrlInteractor.graph() pattern
+      const code = `class View { func run() { MyInteractor.graph() } }`;
+      const captures = extractCallCaptures(parser, code, SupportedLanguages.Cangjie);
+      const match = captures.find(c => c.calledName === 'graph');
+      expect(match).toBeDefined();
+      expect(inferCallForm(match!.callNode, match!.nameNode)).toBe('member');
+      expect(extractReceiverName(match!.nameNode)).toBe('MyInteractor');
     });
   });
 });

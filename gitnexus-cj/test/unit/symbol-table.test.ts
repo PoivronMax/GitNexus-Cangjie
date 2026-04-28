@@ -552,4 +552,41 @@ describe('SymbolTable', () => {
       expect(table.lookupFieldByOwner('class:A\0id', '')).toBeUndefined();
     });
   });
+
+  describe('lookupByNodeId', () => {
+    it('finds a symbol by its nodeId', () => {
+      table.add('src/foo.ts', 'save', 'Method:src/foo.ts:save', 'Method', {
+        ownerId: 'Class:src/foo.ts:User',
+      });
+      const def = table.lookupByNodeId('Method:src/foo.ts:save');
+      expect(def).toBeDefined();
+      expect(def!.type).toBe('Method');
+      expect(def!.ownerId).toBe('Class:src/foo.ts:User');
+    });
+
+    it('returns undefined for an unknown nodeId', () => {
+      expect(table.lookupByNodeId('Method:src/nonexistent.ts:missing')).toBeUndefined();
+    });
+
+    it('resolves ownerId for source and target methods belonging to different classes', () => {
+      table.add('src/view.ts', 'onTapRefresh', 'Method:src/view.ts:onTapRefresh', 'Method', {
+        ownerId: 'Class:src/view.ts:LogicBusinessDiConfigCtrlView',
+      });
+      table.add('src/interactor.ts', 'appendLog', 'Method:src/interactor.ts:appendLog', 'Method', {
+        ownerId: 'Class:src/interactor.ts:LogicBusinessDiConfigCtrlInteractor',
+      });
+      const src = table.lookupByNodeId('Method:src/view.ts:onTapRefresh');
+      const tgt = table.lookupByNodeId('Method:src/interactor.ts:appendLog');
+      expect(src!.ownerId).toBe('Class:src/view.ts:LogicBusinessDiConfigCtrlView');
+      expect(tgt!.ownerId).toBe('Class:src/interactor.ts:LogicBusinessDiConfigCtrlInteractor');
+      expect(src!.ownerId).not.toBe(tgt!.ownerId);
+    });
+
+    it('returns undefined ownerId for a top-level Function (no enclosing class)', () => {
+      table.add('src/foo.ts', 'helper', 'Function:src/foo.ts:helper', 'Function');
+      const def = table.lookupByNodeId('Function:src/foo.ts:helper');
+      expect(def).toBeDefined();
+      expect(def!.ownerId).toBeUndefined();
+    });
+  });
 });

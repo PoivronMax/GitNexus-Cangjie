@@ -58,6 +58,13 @@ export interface SymbolTable {
   lookupFieldByOwner: (ownerNodeId: string, fieldName: string) => SymbolDefinition | undefined;
 
   /**
+   * Look up a symbol definition by its nodeId.
+   * O(1) via a reverse index populated during add().
+   * Used to resolve ownerId (enclosing class) for any Method/Constructor/Property node.
+   */
+  lookupByNodeId: (nodeId: string) => SymbolDefinition | undefined;
+
+  /**
    * Debugging: See how many symbols are tracked
    */
   getStats: () => { fileCount: number; globalSymbolCount: number };
@@ -86,6 +93,10 @@ export const createSymbolTable = (): SymbolTable => {
   // Only Property symbols with ownerId and declaredType are indexed.
   const fieldByOwner = new Map<string, SymbolDefinition>();
 
+  // 5. NodeId reverse index — for O(1) lookupByNodeId.
+  // Enables ownerId resolution for any Method/Constructor/Property given only its nodeId.
+  const nodeIdIndex = new Map<string, SymbolDefinition>();
+
   const CALLABLE_TYPES = new Set(['Function', 'Method', 'Constructor']);
 
   const add = (
@@ -110,6 +121,9 @@ export const createSymbolTable = (): SymbolTable => {
       fileIndex.set(filePath, new Map());
     }
     fileIndex.get(filePath)!.set(name, def);
+
+    // A2. Add to nodeId reverse index (shared reference)
+    nodeIdIndex.set(nodeId, def);
 
     // B. Properties go to fieldByOwner index only — skip globalIndex to prevent
     // namespace pollution for common names like 'id', 'name', 'type'.
@@ -161,6 +175,10 @@ export const createSymbolTable = (): SymbolTable => {
     return fieldByOwner.get(`${ownerNodeId}\0${fieldName}`);
   };
 
+  const lookupByNodeId = (nodeId: string): SymbolDefinition | undefined => {
+    return nodeIdIndex.get(nodeId);
+  };
+
   const getStats = () => ({
     fileCount: fileIndex.size,
     globalSymbolCount: globalIndex.size
@@ -171,7 +189,8 @@ export const createSymbolTable = (): SymbolTable => {
     globalIndex.clear();
     callableIndex = null;
     fieldByOwner.clear();
+    nodeIdIndex.clear();
   };
 
-  return { add, lookupExact, lookupExactFull, lookupFuzzy, lookupFuzzyCallable, lookupFieldByOwner, getStats, clear };
+  return { add, lookupExact, lookupExactFull, lookupFuzzy, lookupFuzzyCallable, lookupFieldByOwner, lookupByNodeId, getStats, clear };
 };

@@ -718,6 +718,20 @@ export const processCallsFromExtracted = async (graph, extractedCalls, ctx, onPr
                 confidence: resolved.confidence,
                 reason: resolved.reason,
             });
+            // Emit a Class→Class CALLS edge when the call crosses class boundaries.
+            // Enables impact analysis on Class nodes (e.g. "what classes depend on ClassX?").
+            const sourceClassId = ctx.symbols.lookupByNodeId(effectiveCall.sourceId)?.ownerId;
+            const targetClassId = ctx.symbols.lookupByNodeId(resolved.nodeId)?.ownerId;
+            if (sourceClassId && targetClassId && sourceClassId !== targetClassId) {
+                graph.addRelationship({
+                    id: generateId('CALLS', `${sourceClassId}->${targetClassId}`),
+                    sourceId: sourceClassId,
+                    targetId: targetClassId,
+                    type: 'CALLS',
+                    confidence: resolved.confidence,
+                    reason: 'class-dependency',
+                });
+            }
         }
         ctx.clearCache();
     }
